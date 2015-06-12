@@ -5,19 +5,208 @@
     <title>大辉Face</title>
     <meta name="keywords" content="Polymer,WebSocket,Java,Tomcat,Html5" />
     <meta name="description" content="免费的 web 技术教程。" />
-    <link rel="import" href="phone_search/dom-element.html">
 </head>
 <body>
-	<h1>Polymer+WebSocket<h3>实现手机号归属地查询</h3></h1>
-	<dom-element></dom-element>
-    
+    <h1>Player</h1>
+    <div>
+        <div style="float:left;height:800px" >
+            <canvas id="canvas" width="800" height="800" ></canvas>
+        </div>
+        <div>
+            <header>玩家日志</header>
+            <pre id="message"></pre>
+        </div>
+    </div>
     <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
-    <script src="js/ws.js"></script>
+    <script type="text/javascript" src="js/ws.js"></script>
+    <script type="text/javascript" src="js/bomb.js"></script>
+    <script type="text/javascript" src="js/map.js"></script>
     <script type="text/javascript">
-        Server.init=function(){
-            Server.connect("ws://52.24.120.172/phone");
-        };
-        Server.init();
+        var ownId;
+        var demoMsg = document.getElementById("message");
+        var Game = {};
+        var pathColor = ['blue','red'];
+        var logLevel = {Event:{level:0,color:'green'},Warn:{level:1,color:'orange'},Fight:{level:2,color:'red'}};
+
+        function Player(){
+            this.id = 0;
+            this.color = null;
+            this.x = 5;
+            this.y = 5;
+            this.isAttack = 0;
+            this.direction = 39;
+        }
+        Player.prototype.draw = function(ctx){
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x,this.y,5,0,2*Math.PI);
+            ctx.stroke();
+            ctx.fill();
+        }
+
+        Game.init = function(){
+            var canvas = document.getElementById('canvas');
+            this.direction = 39;
+            this.context = canvas.getContext("2d");
+            this.map = new Map();
+            this.players = [];
+            this.map.draw(this.context);
+            this.bombs = [];
+
+            window.addEventListener('keydown', function (e) {
+                var code = e.keyCode;
+                if(code==13){
+                    Game.openFire();
+                }
+                if (code > 36 && code < 41) {
+                    Game.players[ownId].direction = code;
+                    switch (code) {
+                        case 37:
+                            Game.move(-10,0);
+                            break;
+                        case 38:
+                            Game.move(0,-10);
+                            break;
+                        case 39:
+                            Game.move(10,0);
+                            break;
+                        case 40:
+                            Game.move(0,10);
+                            break;
+                    }
+                }
+            }, false);
+        }
+
+        Game.check=function(moveX , moveY){
+            var frontX = parseInt(moveX)+parseInt(this.players[ownId].x);
+            var frontY = parseInt(moveY)+parseInt(this.players[ownId].y);
+
+            for(id in this.players){
+                if(this.players[id]!=null && this.players[id].x == frontX && this.players[id].y == frontY){
+                    return 0;
+                }
+            }
+            return 1;
+        }
+        Game.openFire=function(){
+            if(this.players[ownId].isAttack)
+                return;
+            bomb = new Bomb(this.players[ownId]);
+            bomb.ctx = this.context;
+            bomb.direction = this.players[ownId].direction;
+            this.bombs[ownId] = bomb;
+            this.players[ownId].isAttack=1;
+            bomb.taskId = setInterval("bomb.draw()",1000);
+            
+            Server.socket.send(packMsg(3,this.players[ownId].id,this.players[ownId].x,this.players[ownId].y,3,'attack',this.players[ownId].direction));
+
+            
+        }
+        var i = 0;
+        Game.showBomb=function(id){
+            bomb = new Bomb(this.players[id]);
+            bomb.ctx = this.context;
+            bomb.direction = this.players[id].direction;
+            this.bombs[id] = bomb;
+            bomb.taskId = setInterval(function(){console.log(bomb)},1000);
+            
+            /*for(bid in this.bombs){
+                b = this.bombs[bid];
+                if(b!=null && b!=undefined)
+                    b.taskId = setInterval("b.draw()",1000);
+            }*/
+        }
+        Game.move=function(moveX , moveY){
+            if(!Game.check(moveX , moveY)){
+                Game.chat(ownId,'We met the enemy ! Kill them',logLevel.Warn);
+                return;
+            }
+            this.context.clearRect(parseInt(this.players[ownId].x)-6,parseInt(this.players[ownId].y)-6,12,12); 
+            Map.prototype.drawPath(this.context,this.players[ownId].x,this.players[ownId].y,pathColor[1]);
+
+
+            this.players[ownId].x = parseInt(moveX)+parseInt(this.players[ownId].x);
+            this.players[ownId].y = parseInt(moveY)+parseInt(this.players[ownId].y);
+            this.players[ownId].draw(this.context);
+
+            Server.socket.send(packMsg(3,ownId,this.players[ownId].x,this.players[ownId].y,1,'move',this.players[ownId].direction));
+        }
+        Game.addPlayer=function(id,x,y,color){
+            this.players[id] = new Player();
+            this.players[id].color = color;
+            this.players[id].x = x;
+            this.players[id].y = y;
+            this.players[id].id = id;
+
+            this.players[id].draw(this.context);
+        }
+
+
+        Game.updatePlayer=function(id,x,y,color,direction){
+            var beforeX = this.players[id].x;
+            var beforeY = this.players[id].y;
+            
+            this.context.clearRect(parseInt(beforeX)-6,parseInt(beforeY)-6,12,12); 
+            Map.prototype.drawPath(this.context,beforeX,beforeY,color);
+
+
+            this.players[id].color = color;
+            this.players[id].x = x;
+            this.players[id].y = y;
+            this.players[id].direction = direction;
+
+            this.players[id].draw(this.context);
+        }
+        Game.deletePlayer=function(id,x,y,color){
+            this.players[id] = null;
+
+            this.context.clearRect(parseInt(x)-6,parseInt(y)-6,12,12); 
+            Map.prototype.drawPath(this.context,x,y,color);
+        }
+
+        Game.chat=function(id,msg,logLevel){
+            var sayMsg = "<font color='"+logLevel.color+"'>Player_"+ id +"\t"+ msg+"</font>\r\n";
+            
+            demoMsg.innerHTML = sayMsg + demoMsg.innerHTML ;
+        }
+
+        Game.init();
+
+        function gameMsg(message){
+            var msg = eval('('+message.data+')');
+            
+            switch(parseInt(msg['type'])){
+                case 0 :
+                    if(ownId===undefined){
+                        ownId = msg['id'];
+                        Game.addPlayer(msg['id'],msg['x'],msg['y'],pathColor[1]);
+                    }else{
+                        Game.addPlayer(msg['id'],msg['x'],msg['y'],pathColor[0]);
+                    }
+                    break;
+                case 1 :
+                    Game.updatePlayer(msg['id'],msg['x'],msg['y'],pathColor[0],msg['direction']);
+                    break;
+                case 2 :
+                    Game.deletePlayer(msg['id'],msg['x'],msg['y'],pathColor[0]);
+                    break;
+                case 3 : 
+                    console.log("--------")
+                    Game.showBomb(msg['id']);
+                    break;
+                case 4 : 
+                    
+                    break;
+            }
+
+            
+            Game.chat(msg['id'],msg['msg'],logLevel.Event);
+        }
+
+        function packMsg(hId,id,x,y,type,msg,direction){
+            return '{"hId":'+hId+',"id":'+id+',"x":'+x+',"y":'+y+',"type":'+type+',"msg":"'+msg+'",direction:'+direction+'}';
+        }
     </script>
 </body>
 </html>

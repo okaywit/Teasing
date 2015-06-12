@@ -1,6 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 
-<dom-module id="dom-element">
+<dom-module id="phone-element">
   <template>
     <input is="text" bind-value="{{phone}}" id="phone" placeholder="phone here...">
     <input type="button" value="search" on-click="search">
@@ -10,7 +10,7 @@
 
 <script>
 	Polymer({
-		is: "dom-element",
+		is: "phone-element",
 		properties: {
 			phone:{
 				type:String,

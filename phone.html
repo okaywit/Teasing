@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>大辉Face - 手机号归属地查询</title>
+    <meta name="keywords" content="Polymer,WebSocket,Java,Tomcat,Html5" />
+    <meta name="description" content="免费的 web 技术教程。" />
+    <link rel="import" href="phone_search/phone-element.html">
+</head>
+<body>
+	<h1>Polymer+WebSocket</h1>
+    <h3>实现手机号归属地查询</h3>
+	<phone-element></phone-element>
+
+    <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+    <script src="js/ws.js"></script>
+    <script type="text/javascript">
+        Server.init=function(){
+            Server.connect("ws://localhost:8080/okaywit/phone");
+        };
+        Server.init();
+    </script>
+</body>
+</html>
