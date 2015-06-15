@@ -8,14 +8,14 @@ function Bomb(player){
     this.shootTime = new Date().getTime();
     this.ctx;
     
-    if(this.direction == 37)
+    /*if(this.direction == 37)
         this.bx = parseInt(this.bx)-10;
     if(this.direction == 38)
         this.by = parseInt(this.by)-10;
     if(this.direction == 39)
         this.bx = parseInt(this.bx)+10;
     if(this.direction == 40)
-        this.by = parseInt(this.by)+10;
+        this.by = parseInt(this.by)+10;*/
 
 }
 Bomb.prototype.check=function(){
@@ -28,8 +28,8 @@ Bomb.prototype.check=function(){
     }
 }
 Bomb.prototype.draw=function(){
-    this.ctx.fillStyle = '#97FFFF';
-    this.ctx.clearRect(parseInt(this.bx)-5,parseInt(this.by)-5,11,11);
+    this.ctx.fillStyle = 'black';
+    this.ctx.clearRect(parseInt(this.bx)-3,parseInt(this.by)-3,6,6);
     
     if ((this.bx > 0 && this.bx<=795) && (this.by>0 && this.by<=795)){
         
@@ -58,7 +58,7 @@ Bomb.prototype.draw=function(){
         }
 
         this.ctx.beginPath();
-        this.ctx.arc(this.bx,this.by,3,0,2*Math.PI);
+        this.ctx.arc(this.bx,this.by,2,0,2*Math.PI);
         this.ctx.stroke();
         this.ctx.fill();
     }else{

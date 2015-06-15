@@ -8,8 +8,8 @@
 </head>
 <body>
     <span>阵营说明：<b>红方</b>自己，<b>蓝方</b>敌人;操作说明：<b>上下左右</b>控制方向，</b>空格</b>发射导弹（一次一枚）。</span>
-    <div>
-        <div style="float:left;height:800px;padding-right:20px;" >
+    <div style="height:100%;width:100%;">
+        <div style="float:left;padding-right:20px;" >
             <canvas id="canvas" width="800" height="800" ></canvas>
             <header>便捷操作：</header>
             <input type="button" value="发    射" style="width:100px;height:50px;background:red" onclick="Game.openFire()">
@@ -45,6 +45,7 @@
         Player.prototype.draw = function(ctx){
             ctx.fillStyle = this.color;
             ctx.beginPath();
+            ctx.lineWidth="1";
             ctx.arc(this.x,this.y,5,0,2*Math.PI);
             ctx.stroke();
             ctx.fill();
@@ -60,8 +61,7 @@
             this.bombs = [];
 
             window.addEventListener('keydown', function (e) {
-                var code = e.keyCode;
-                console.log(code);  
+                var code = e.keyCode; 
                 if(code==32){
                     Game.openFire();
                 }
@@ -109,7 +109,6 @@
             },50);
             
             Server.socket.send(packMsg(5,this.players[ownId].id,this.players[ownId].x,this.players[ownId].y,3,ownId+' start attack',this.players[ownId].direction));
-
             
         }
         var i = 0;
