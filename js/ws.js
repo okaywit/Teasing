@@ -17,6 +17,6 @@ Server.connect=(function(host){
 });
 
 Server.init=function(){
-    Server.connect("ws://localhost:8080/okaywit/game");
+    Server.connect("ws://grownbook.com:8080/game");
 };
 Server.init();
