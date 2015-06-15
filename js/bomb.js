@@ -29,7 +29,7 @@ Bomb.prototype.check=function(){
 }
 Bomb.prototype.draw=function(){
     this.ctx.fillStyle = 'black';
-    this.ctx.clearRect(parseInt(this.bx)-3,parseInt(this.by)-3,6,6);
+    //this.ctx.clearRect(parseInt(this.bx)-3,parseInt(this.by)-3,6,6);
     
     if ((this.bx > 0 && this.bx<=795) && (this.by>0 && this.by<=795)){
         

@@ -1,6 +1,9 @@
-function Map(){}
+function Map(){
+    this.img=new Image();
+    this.img.src="img/b1.jpg";
+}
 Map.prototype.draw = function(ctx){
-    ctx.beginPath();
+    /*ctx.beginPath();
     ctx.lineWidth="4";
     ctx.strokeStyle="green";
     ctx.rect(0,0,800,800);
@@ -14,8 +17,9 @@ Map.prototype.draw = function(ctx){
     gradient.addColorStop("1.0","red");
     // 用渐变填色
     ctx.fillStyle=gradient;
-    ctx.fillText("DuangDuang娘炮游戏区 ",200,350);
-
+    ctx.fillText("DuangDuang娘炮游戏区 ",200,350);*/
+    ctx.clearRect(0,0,800,800);
+    ctx.drawImage(this.img,0,0,800,800);
 
     /*for(var x=0;x<800;x+=10){
         for(var y=0;y<800;y+=10){
