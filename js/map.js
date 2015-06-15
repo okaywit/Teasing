@@ -1,6 +1,6 @@
 function Map(){
     this.img=new Image();
-    this.img.src="img/b1.jpg";
+    this.img.src="http://7xjda0.com1.z0.glb.clouddn.com/b1.jpg";
 }
 Map.prototype.draw = function(ctx){
     /*ctx.beginPath();
