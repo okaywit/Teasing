@@ -3,6 +3,8 @@ function Map(){
     this.img.src="http://7xjda0.com1.z0.glb.clouddn.com/b1.jpg";*/
 }
 Map.prototype.draw = function(ctx){
+    ctx.clearRect(0,0,800,800);
+    
     ctx.beginPath();
     ctx.lineWidth="4";
     ctx.strokeStyle="green";
