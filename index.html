@@ -7,13 +7,19 @@
     <meta name="description" content="免费的 web 技术教程。" />
 </head>
 <body>
-    <h1>Player</h1>
+        <span>阵营说明：<b>红方</b>自己，<b>蓝方</b>敌人;操作说明：<b>上下左右</b>控制方向，</b>空格</b>发射导弹（一次一枚）。</span>
     <div>
-        <div style="float:left;height:800px" >
+        <div style="float:left;height:800px;padding-right:20px;" >
             <canvas id="canvas" width="800" height="800" ></canvas>
         </div>
-        <div>
-            <header>玩家日志</header>
+        <div style="">
+            <header>便捷操作：</header>
+            <input type="button" value="发    射" onclick="Game.openFire()"><br/><br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;<input type="button" value="上" onmousedown="Game.move(0,-10)"><br/>
+            <input type="button" value="左" onclick="Game.move(-10,0)">
+            <input type="button" value="右" onclick="Game.move(10,0)"><br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;<input type="button" value="下" onclick="Game.move(0,10)">
+            <header>玩家日志：</header>
             <pre id="message"></pre>
         </div>
     </div>
@@ -55,7 +61,8 @@
 
             window.addEventListener('keydown', function (e) {
                 var code = e.keyCode;
-                if(code==13){
+                console.log(code);  
+                if(code==32){
                     Game.openFire();
                 }
                 if (code > 36 && code < 41) {
@@ -97,9 +104,11 @@
             bomb.direction = this.players[ownId].direction;
             this.bombs[ownId] = bomb;
             this.players[ownId].isAttack=1;
-            bomb.taskId = setInterval("bomb.draw()",1000);
+            bomb.taskId = setInterval(function(){
+                Game.bombs[ownId].draw();
+            },50);
             
-            Server.socket.send(packMsg(3,this.players[ownId].id,this.players[ownId].x,this.players[ownId].y,3,'attack',this.players[ownId].direction));
+            Server.socket.send(packMsg(5,this.players[ownId].id,this.players[ownId].x,this.players[ownId].y,3,ownId+' start attack',this.players[ownId].direction));
 
             
         }
@@ -109,13 +118,14 @@
             bomb.ctx = this.context;
             bomb.direction = this.players[id].direction;
             this.bombs[id] = bomb;
-            bomb.taskId = setInterval(function(){console.log(bomb)},1000);
+            bomb.taskId = setInterval(function(){
+                Game.bombs[id].draw();
+            },50);
             
-            /*for(bid in this.bombs){
-                b = this.bombs[bid];
-                if(b!=null && b!=undefined)
-                    b.taskId = setInterval("b.draw()",1000);
-            }*/
+        }
+        Game.deleteBomb=function(id){
+            this.players[id].isAttack = 0;
+            clearInterval(this.bombs[id].taskId);
         }
         Game.move=function(moveX , moveY){
             if(!Game.check(moveX , moveY)){
@@ -128,9 +138,23 @@
 
             this.players[ownId].x = parseInt(moveX)+parseInt(this.players[ownId].x);
             this.players[ownId].y = parseInt(moveY)+parseInt(this.players[ownId].y);
+
+            if(this.players[ownId].x>795){
+                this.players[ownId].x=5;
+            }
+            if(this.players[ownId].x<0){
+                this.players[ownId].x=795;
+            }
+            if(this.players[ownId].y>795){
+                this.players[ownId].y=5;
+            }
+            if(this.players[ownId].y<0){
+                this.players[ownId].y=795;
+            }
+
             this.players[ownId].draw(this.context);
 
-            Server.socket.send(packMsg(3,ownId,this.players[ownId].x,this.players[ownId].y,1,'move',this.players[ownId].direction));
+            Server.socket.send(packMsg(3,ownId,this.players[ownId].x,this.players[ownId].y,1,'Go ('+this.players[ownId].x+','+this.players[ownId].y+')',this.players[ownId].direction));
         }
         Game.addPlayer=function(id,x,y,color){
             this.players[id] = new Player();
@@ -167,8 +191,12 @@
 
         Game.chat=function(id,msg,logLevel){
             var sayMsg = "<font color='"+logLevel.color+"'>Player_"+ id +"\t"+ msg+"</font>\r\n";
+            if(demoMsg.getElementsByTagName("font").length>19){
+                demoMsg.innerHTML = sayMsg;
+            }else{
+                demoMsg.innerHTML = sayMsg + demoMsg.innerHTML ;
+            }
             
-            demoMsg.innerHTML = sayMsg + demoMsg.innerHTML ;
         }
 
         Game.init();
@@ -184,24 +212,27 @@
                     }else{
                         Game.addPlayer(msg['id'],msg['x'],msg['y'],pathColor[0]);
                     }
+                    Game.chat(msg['id'],msg['msg'],logLevel.Event);
                     break;
                 case 1 :
                     Game.updatePlayer(msg['id'],msg['x'],msg['y'],pathColor[0],msg['direction']);
+                    Game.chat(msg['id'],msg['msg'],logLevel.Event);
                     break;
                 case 2 :
                     Game.deletePlayer(msg['id'],msg['x'],msg['y'],pathColor[0]);
+                    Game.chat(msg['id'],msg['msg'],logLevel.Event);
                     break;
                 case 3 : 
-                    console.log("--------")
                     Game.showBomb(msg['id']);
+                    Game.chat(msg['id'],msg['msg'],logLevel.Warn);
                     break;
                 case 4 : 
-                    
+                    Game.deleteBomb(msg['id']);
+                    Game.chat(msg['id'],msg['msg'],logLevel.Fight);
                     break;
             }
 
             
-            Game.chat(msg['id'],msg['msg'],logLevel.Event);
         }
 
         function packMsg(hId,id,x,y,type,msg,direction){

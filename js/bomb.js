@@ -18,6 +18,15 @@ function Bomb(player){
         this.by = parseInt(this.by)+10;
 
 }
+Bomb.prototype.check=function(){
+    for(id in Game.players){
+        if(Game.players[id] != null && Game.players[id].x == this.bx &&  Game.players[id].y == this.by){
+            Server.socket.send(packMsg(4,this.player.id,this.bx,this.by,4,'attack',Game.players[id].direction));
+            this.player.isAttack = 0;
+            clearInterval(this.taskId);
+        }
+    }
+}
 Bomb.prototype.draw=function(){
     this.ctx.fillStyle = '#97FFFF';
     this.ctx.clearRect(parseInt(this.bx)-5,parseInt(this.by)-5,11,11);
@@ -39,13 +48,21 @@ Bomb.prototype.draw=function(){
             this.by = parseInt(this.by)+this.speed;
         }
 
+        for(id in Game.players){
+            if(Game.players[id] != null && Game.players[id].x == this.bx &&  Game.players[id].y == this.by){
+                Server.socket.send(packMsg(4,this.player.id,this.bx,this.by,4,'attack',Game.players[id].direction));
+                this.player.isAttack = 0;
+                clearInterval(this.taskId);
+                return;
+            }
+        }
+
         this.ctx.beginPath();
         this.ctx.arc(this.bx,this.by,3,0,2*Math.PI);
         this.ctx.stroke();
         this.ctx.fill();
     }else{
         this.player.isAttack = 0;
-        console.log(this.taskId+"---"+this.player.id);
         clearInterval(this.taskId);
     }
     //Server.socket.send(packMsg(4,this.player.id,this.bx,this.by,3,'attack',this.direction));
