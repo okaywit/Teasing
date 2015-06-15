@@ -7,23 +7,23 @@
     <meta name="description" content="免费的 web 技术教程。" />
 </head>
 <body>
-        <span>阵营说明：<b>红方</b>自己，<b>蓝方</b>敌人;操作说明：<b>上下左右</b>控制方向，</b>空格</b>发射导弹（一次一枚）。</span>
+    <span>阵营说明：<b>红方</b>自己，<b>蓝方</b>敌人;操作说明：<b>上下左右</b>控制方向，</b>空格</b>发射导弹（一次一枚）。</span>
     <div>
         <div style="float:left;height:800px;padding-right:20px;" >
             <canvas id="canvas" width="800" height="800" ></canvas>
-        </div>
-        <div style="">
             <header>便捷操作：</header>
-            <input type="button" value="发    射" onclick="Game.openFire()"><br/><br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;<input type="button" value="上" onclick="Game.move(0,-10)"><br/>
-            <input type="button" value="左" onclick="Game.move(-10,0)">
-            <input type="button" value="右" onclick="Game.move(10,0)"><br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;<input type="button" value="下" onclick="Game.move(0,10)">
+            <input type="button" value="发    射" style="width:100px;height:50px;background:red" onclick="Game.openFire()">
+
+            &nbsp;&nbsp;&nbsp;&nbsp;<input type="button" style="width:100px;height:50px" value="上" onclick="clickMove(38,0,-10)">
+            &nbsp;&nbsp;&nbsp;&nbsp;<input type="button" style="width:100px;height:50px" value="左" onclick="clickMove(37,-10,0)">
+            &nbsp;&nbsp;&nbsp;&nbsp;<input type="button" style="width:100px;height:50px" value="右" onclick="clickMove(39,10,0)">
+            &nbsp;&nbsp;&nbsp;&nbsp;<input type="button" style="width:100px;height:50px" value="下" onclick="clickMove(40,0,10)">
+        </div>
+        <div>
             <header>玩家日志：</header>
             <pre id="message"></pre>
         </div>
     </div>
-    <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
     <script type="text/javascript" src="js/ws.js"></script>
     <script type="text/javascript" src="js/bomb.js"></script>
     <script type="text/javascript" src="js/map.js"></script>
@@ -237,6 +237,10 @@
 
         function packMsg(hId,id,x,y,type,msg,direction){
             return '{"hId":'+hId+',"id":'+id+',"x":'+x+',"y":'+y+',"type":'+type+',"msg":"'+msg+'",direction:'+direction+'}';
+        }
+        function clickMove(code,x,y){
+            Game.move(x,y);
+            Game.players[ownId].direction = code;
         }
     </script>
 </body>
