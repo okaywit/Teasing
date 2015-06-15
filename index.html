@@ -238,8 +238,8 @@
             return '{"hId":'+hId+',"id":'+id+',"x":'+x+',"y":'+y+',"type":'+type+',"msg":"'+msg+'",direction:'+direction+'}';
         }
         function clickMove(code,x,y){
-            Game.move(x,y);
             Game.players[ownId].direction = code;
+            Game.move(x,y);
         }
     </script>
 </body>
