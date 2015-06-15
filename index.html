@@ -25,7 +25,6 @@
             <pre id="message"></pre>
         </div>
     </div>
-    <script type="text/javascript" src="js/ws.js"></script>
     <script type="text/javascript" src="js/bomb.js"></script>
     <script type="text/javascript" src="js/map.js"></script>
     <script type="text/javascript">
@@ -33,6 +32,8 @@
         var demoMsg = document.getElementById("message");
         var Game = {};
         var pathColor = ['blue','red'];
+        const MAP_WIDTH = 800;
+        const MAP_HEIGHT = 800;
         var logLevel = {Event:{level:0,color:'green'},Warn:{level:1,color:'orange'},Fight:{level:2,color:'red'}};
 
         function Player(){
@@ -254,5 +255,6 @@
             obj.blur();
         }
     </script>
+    <script type="text/javascript" src="js/ws.js"></script>
 </body>
 </html>

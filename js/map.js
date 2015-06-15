@@ -3,12 +3,12 @@ function Map(){
     this.img.src="http://7xjda0.com1.z0.glb.clouddn.com/b1.jpg";*/
 }
 Map.prototype.draw = function(ctx){
-    ctx.clearRect(0,0,800,800);
+    ctx.clearRect(0,0,MAP_WIDTH,MAP_HEIGHT);
     
     ctx.beginPath();
     ctx.lineWidth="4";
     ctx.strokeStyle="green";
-    ctx.rect(0,0,800,800);
+    ctx.rect(0,0,MAP_WIDTH,MAP_HEIGHT);
     ctx.stroke();
 
     ctx.font="30px Verdana";
