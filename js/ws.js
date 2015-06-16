@@ -6,7 +6,7 @@ Server.connect=(function(host){
 		
 	};
 	Server.socket.onmessage = function(message){
-		gameMsg(message);
+
 	};
 	Server.socket.onerror = function(error){
 
@@ -15,8 +15,6 @@ Server.connect=(function(host){
 		
 	};
 });
-
-Server.init=function(){
-    Server.connect("ws://grownbook.com:8080/game");
+Server.init=function(path){
+	Server.connect("ws://grownbook.com:8080/"+path);
 };
-Server.init();

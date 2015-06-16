@@ -20,6 +20,7 @@ Map.prototype.draw = function(ctx){
     // 用渐变填色
     ctx.fillStyle=gradient;
     ctx.fillText("DuangDuang娘炮游戏区 ",200,350);
+    
     /*ctx.clearRect(0,0,800,800);
     ctx.drawImage(this.img,0,0,800,800);*/
 

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>大辉Face</title>
+    <meta name="keywords" content="Polymer,WebSocket,Java,Tomcat,Html5" />
+    <meta name="description" content="免费的 web 技术教程。" />
+</head>
+<body>
+    <span>阵营说明：<b>红方</b>自己，<b>蓝方</b>敌人;操作说明：<b>上下左右</b>控制方向，<b>空格</b>发射导弹（一次一枚）。</span>
+    <div style="height:500%;width:100%;">
+        <div style="float:left;padding-right:20px;" >
+            <canvas id="canvas" width="800" height="800" style="margin: 0 auto;"></canvas>
+            <header>便捷操作：</header>
+            <input type="button" value="发    射" style="width:100px;height:50px;background:green" onclick="Game.openFire()">
+
+            &nbsp;&nbsp;&nbsp;&nbsp;<input type="button" style="width:100px;height:50px;" value="↑" onclick="clickMove(38,0,-10)">
+            &nbsp;&nbsp;&nbsp;&nbsp;<input type="button" style="width:100px;height:50px" value="←" onclick="clickMove(37,-10,0)">
+            &nbsp;&nbsp;&nbsp;&nbsp;<input type="button" style="width:100px;height:50px" value="→" onclick="clickMove(39,10,0)">
+            &nbsp;&nbsp;&nbsp;&nbsp;<input type="button" style="width:100px;height:50px" value="↓" onclick="clickMove(40,0,10)">
+            &nbsp;&nbsp;&nbsp;&nbsp;<input type="button" style="width:100px;height:50px;background:red" value="重绘" onclick="reload(this)">
+        </div>
+        <div>
+            <header>玩家日志：</header>
+            <pre id="message"></pre>
+        </div>
+    </div>
+    <script type="text/javascript" src="js/bomb.js"></script>
+    <script type="text/javascript" src="js/map.js"></script>
+    <script type="text/javascript" src="js/ws.js"></script>
+    <script type="text/javascript">
+        var ownId;
+        var demoMsg = document.getElementById("message");
+        var Game = {};
+        var pathColor = ['blue','red'];
+        const MAP_WIDTH = 800;
+        const MAP_HEIGHT = 800;
+        var logLevel = {Event:{level:0,color:'green'},Warn:{level:1,color:'orange'},Fight:{level:2,color:'red'}};
+
+        function Player(){
+            this.id = 0;
+            this.color = null;
+            this.x = 5;
+            this.y = 5;
+            this.isAttack = 0;
+            this.direction = 39;
+        }
+        Player.prototype.draw = function(ctx){
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.lineWidth="1";
+            ctx.arc(this.x,this.y,5,0,2*Math.PI);
+            ctx.stroke();
+            ctx.fill();
+        };
+
+        Game.init = function(){
+            var canvas = document.getElementById('canvas');
+            this.direction = 39;
+            this.context = canvas.getContext("2d");
+            this.map = new Map();
+            this.players = [];
+            this.map.draw(this.context);
+            this.bombs = [];
+
+            window.addEventListener('keydown', function (e) {
+                var code = e.keyCode; 
+                if(code==32){
+                    Game.openFire();
+                }
+                if (code > 36 && code < 41) {
+                    Game.players[ownId].direction = code;
+                    switch (code) {
+                        case 37:
+                            Game.move(-10,0);
+                            break;
+                        case 38:
+                            Game.move(0,-10);
+                            break;
+                        case 39:
+                            Game.move(10,0);
+                            break;
+                        case 40:
+                            Game.move(0,10);
+                            break;
+                    }
+                }
+            }, false);
+        };
+
+        Game.check=function(moveX , moveY){
+            var frontX = parseInt(moveX)+parseInt(this.players[ownId].x);
+            var frontY = parseInt(moveY)+parseInt(this.players[ownId].y);
+
+            for(id in this.players){
+                if(this.players[id]!=null && this.players[id].x == frontX && this.players[id].y == frontY){
+                    return 0;
+                }
+            }
+            return 1;
+        };
+        Game.openFire=function(){
+            if(this.players[ownId].isAttack)
+                return;
+            bomb = new Bomb(this.players[ownId]);
+            bomb.ctx = this.context;
+            bomb.direction = this.players[ownId].direction;
+            this.bombs[ownId] = bomb;
+            this.players[ownId].isAttack=1;
+            bomb.taskId = setInterval(function(){
+                Game.bombs[ownId].draw();
+            },20);
+            
+            Server.socket.send(packMsg(5,this.players[ownId].id,this.players[ownId].x,this.players[ownId].y,3,ownId+' start attack',this.players[ownId].direction));
+            
+        };
+        var i = 0;
+        Game.showBomb=function(id){
+            bomb = new Bomb(this.players[id]);
+            bomb.ctx = this.context;
+            bomb.direction = this.players[id].direction;
+            this.bombs[id] = bomb;
+            bomb.taskId = setInterval(function(){
+                Game.bombs[id].draw();
+            },20);
+            
+        };
+        Game.deleteBomb=function(id){
+            this.players[id].isAttack = 0;
+            clearInterval(this.bombs[id].taskId);
+        };
+        Game.move=function(moveX , moveY){
+            if(!Game.check(moveX , moveY)){
+                Game.chat(ownId,'We met the enemy ! Kill them',logLevel.Warn);
+                return;
+            }
+            //this.context.clearRect(parseInt(this.players[ownId].x)-6,parseInt(this.players[ownId].y)-6,12,12); 
+            //Map.prototype.drawPath(this.context,this.players[ownId].x,this.players[ownId].y,pathColor[1]);
+
+
+            this.players[ownId].x = parseInt(moveX)+parseInt(this.players[ownId].x);
+            this.players[ownId].y = parseInt(moveY)+parseInt(this.players[ownId].y);
+
+            if(this.players[ownId].x>795){
+                this.players[ownId].x=5;
+            }
+            if(this.players[ownId].x<0){
+                this.players[ownId].x=795;
+            }
+            if(this.players[ownId].y>795){
+                this.players[ownId].y=5;
+            }
+            if(this.players[ownId].y<0){
+                this.players[ownId].y=795;
+            }
+
+            this.players[ownId].draw(this.context);
+
+            Server.socket.send(packMsg(3,ownId,this.players[ownId].x,this.players[ownId].y,1,'Go ('+this.players[ownId].x+','+this.players[ownId].y+')',this.players[ownId].direction));
+        };
+        Game.addPlayer=function(id,x,y,color){
+            this.players[id] = new Player();
+            this.players[id].color = color;
+            this.players[id].x = x;
+            this.players[id].y = y;
+            this.players[id].id = id;
+
+            this.players[id].draw(this.context);
+        };
+
+
+        Game.updatePlayer=function(id,x,y,color,direction){
+            var beforeX = this.players[id].x;
+            var beforeY = this.players[id].y;
+            
+            //this.context.clearRect(parseInt(beforeX)-6,parseInt(beforeY)-6,12,12); 
+            //Map.prototype.drawPath(this.context,beforeX,beforeY,color);
+
+
+            this.players[id].color = color;
+            this.players[id].x = x;
+            this.players[id].y = y;
+            this.players[id].direction = direction;
+
+            this.players[id].draw(this.context);
+        };
+        Game.deletePlayer=function(id,x,y,color){
+            this.players[id] = null;
+
+            //this.context.clearRect(parseInt(x)-6,parseInt(y)-6,12,12); 
+            //Map.prototype.drawPath(this.context,x,y,color);
+        };
+
+        Game.chat=function(id,msg,logLevel){
+            var sayMsg = "<font color='"+logLevel.color+"'>Player_"+ id +"\t"+ msg+"</font>\r\n";
+            if(demoMsg.getElementsByTagName("font").length>19){
+                demoMsg.innerHTML = sayMsg;
+            }else{
+                demoMsg.innerHTML = sayMsg + demoMsg.innerHTML ;
+            }
+            
+        };
+
+        Game.init();
+
+        function packMsg(hId,id,x,y,type,msg,direction){
+            return '{"hId":'+hId+',"id":'+id+',"x":'+x+',"y":'+y+',"type":'+type+',"msg":"'+msg+'",direction:'+direction+'}';
+        }
+        function clickMove(code,x,y){
+            Game.players[ownId].direction = code;
+            Game.move(x,y);
+        }
+        function reload(obj){
+            Game.map.draw(Game.context);
+            for(id in Game.players){
+                var color = pathColor[0];
+                if(id == ownId){
+                    color = pathColor[1];
+                }
+                Game.updatePlayer(id,Game.players[id].x,Game.players[id].y,color,Game.players[id].direction);  
+            }
+            obj.blur();
+        }
+
+
+        Server.init("game");
+        Server.socket.onmessage=function(message){
+            var msg = eval('('+message.data+')');
+
+            switch(parseInt(msg['type'])){
+                case 0 :
+                    if(ownId===undefined){
+                        ownId = msg['id'];
+                        Game.addPlayer(msg['id'],msg['x'],msg['y'],pathColor[1]);
+                    }else{
+                        Game.addPlayer(msg['id'],msg['x'],msg['y'],pathColor[0]);
+                    }
+                    Game.chat(msg['id'],msg['msg'],logLevel.Event);
+                    break;
+                case 1 :
+                    Game.updatePlayer(msg['id'],msg['x'],msg['y'],pathColor[0],msg['direction']);
+                    Game.chat(msg['id'],msg['msg'],logLevel.Event);
+                    break;
+                case 2 :
+                    Game.deletePlayer(msg['id'],msg['x'],msg['y'],pathColor[0]);
+                    Game.chat(msg['id'],msg['msg'],logLevel.Event);
+                    break;
+                case 3 :
+                    Game.showBomb(msg['id']);
+                    Game.chat(msg['id'],msg['msg'],logLevel.Warn);
+                    break;
+                case 4 :
+                    Game.deleteBomb(msg['id']);
+                    Game.chat(msg['id'],msg['msg'],logLevel.Fight);
+                    break;
+            }
+
+
+        }
+
+    </script>
+
+
+</body>
+</html>
